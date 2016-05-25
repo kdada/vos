@@ -27,6 +27,10 @@
 *.i*86
 *.x86_64
 *.hex
+*.img
 
 # Debug files
 *.dSYM/
+
+# Other files
+Makefile*
