@@ -5,6 +5,9 @@ Char hexString[] = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E',
 
 // 整数转换为字符串
 Char* LongToString(Long value){
+    if (value == 0) {
+        return "0";
+    }
     Byte pos = sizeof(tempArea)-1;
     tempArea[pos] = 0;
     --pos;
@@ -14,7 +17,7 @@ Char* LongToString(Long value){
         value = -value;
     }
     while (value > 0) {
-        tempArea[pos] = value % 10;
+        tempArea[pos] = value % 10 + '0';
         --pos;
         value /= 10;       
     }
@@ -28,6 +31,9 @@ Char* LongToString(Long value){
 
 // 整数转换为十六进制字符串
 Char* QuadWordToHex(QuadWord value){
+    if (value == 0) {
+        return "0";
+    }
     Byte pos = sizeof(tempArea)-1;
     tempArea[pos] = 0;
     --pos;

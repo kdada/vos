@@ -48,11 +48,11 @@ void Print(char *str){
         Char c = *str;
         switch (c) {
             case '\t': {
-                Byte maxCol = (Col / 4 + 1)*4;
-                if (maxCol >= ColCount) {
-                    maxCol = ColCount - 1;
+                Byte maxCol = ((Col-1) / 4 + 1)*4;
+                if (maxCol > ColCount) {
+                    maxCol = ColCount;
                 }
-                for (;Col <= maxCol;++Col) {
+                for (;Col < maxCol;++Col) {
                     Write(Row,Col,' ');
                 }
                 break;
