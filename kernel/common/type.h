@@ -2,6 +2,10 @@
 #ifndef HFCommonType
 #define HFCommonType
 
+
+#define true 1
+#define false 0
+typedef unsigned char Bool;
 typedef unsigned char Byte;
 typedef char Char;
 typedef unsigned short Word;

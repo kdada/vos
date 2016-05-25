@@ -4,6 +4,7 @@
 
 #工作目录
 genPath=$(cd `dirname $0`; pwd)
+cd $genPath
 
 kernelPath="kernel"
 buildPath="build"

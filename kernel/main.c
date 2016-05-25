@@ -4,7 +4,11 @@
 
 int main(){
     ClearScreen();
-    PrintString("Load Kernel Succeed");
+    Print("Load Kernel Succeed");
+    Print("Load Kernel\t Succeed\n");
+    Print("Load Kernel Su\tcceed");
+    Print("Load Kernel Succeed");
+    Print("Load Kernel Succeed");
     return 0;
 }
 
