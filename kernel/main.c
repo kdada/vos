@@ -22,7 +22,9 @@ DoubleWord PCIInfo(Byte bus,Byte device,Byte function,Byte offset) {
     return addr;    
 }
 
-int main(){
+
+
+int main(void *memoryMap){    
     ClearScreen();
     for (Word bus = 0;bus < 256;++bus){
         for (Byte device = 0;device < 32;++device){
@@ -53,6 +55,10 @@ int main(){
                         Print("Bridge Device:");
                         break;
                     }
+                    case 0xc: {
+                        Print("Serial Bus Device:");
+                        break;
+                    }
                     default: {
                         Print("Other Device:");
                     }
@@ -66,9 +72,22 @@ int main(){
                 Print(" type-");
                 Print(QuadWordToHex(info));
                 Print("\n");
+                
+                
             }
         }
     }
+    
+    MemoryMapBlock *mm = memoryMap;
+    while (!((mm->base == 0) && (mm->length == 0) && (mm->type == 0))) {
+        Print("Addr:");
+        Print(QuadWordToHex(mm->base));
+        Print(" Len:");
+        Print(QuadWordToHex(mm->length));
+        Print(" Type:");
+        Print(QuadWordToHex(mm->type));
+        Print("\n");
+        ++mm;
+    }
     return 0;
 }
-

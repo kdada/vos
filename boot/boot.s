@@ -1,5 +1,24 @@
 org 0x7c00
 Main:
+	;读取内存布局信息
+	mov di,0x100
+	mov es,di
+	xor di,di
+	xor ebx,ebx
+	mov edx,0x534D4150
+ReadMM:
+	mov eax,0xe820
+	mov ecx,24
+	int 0x15
+	add edi,24
+	cmp ebx,0
+	jnz ReadMM
+	;将下一块全部置为0
+	mov eax,0
+	mov ecx,6
+	rep stosd
+	
+	
 	;加载内核到0x10000
 	mov bx,0x1000
 	mov es,bx
@@ -60,6 +79,7 @@ SwitchTo64:
 bits 64
 JumpToKernel:
 	;跳转到核心代码
+	mov rdi,0x1000
 	call 0x10000
 	hlt
 
