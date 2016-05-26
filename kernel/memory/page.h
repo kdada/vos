@@ -21,6 +21,9 @@ QuadWord* AllocPage(QuadWord count);
 // 释放指定数量(count)的内存页,页面地址的数组为addr
 void FreePage(QuadWord *addr,QuadWord count);
 
-
+// 获取可用内存大小
+QuadWord GetMemorySize();
+// 获取总页数
+QuadWord GetPageCount();
 
 #endif

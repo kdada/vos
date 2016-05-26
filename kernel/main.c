@@ -1,6 +1,7 @@
 #include "common/type.h"
 #include "common/lib.h"
 #include "display/print.h"
+#include "memory/page.h"
 
 
 // 根据PCI地址获取数据 bus:8bit device:5bit function:3bit offset:6bit
@@ -24,7 +25,8 @@ DoubleWord PCIInfo(Byte bus,Byte device,Byte function,Byte offset) {
 
 
 
-int main(void *memoryMap){    
+int main(void *memoryMap){   
+    InitMemory(memoryMap); 
     ClearScreen();
     for (Word bus = 0;bus < 256;++bus){
         for (Byte device = 0;device < 32;++device){
@@ -89,5 +91,10 @@ int main(void *memoryMap){
         Print("\n");
         ++mm;
     }
+    Print("Memory Size:");
+    Print(LongToString(GetMemorySize()));
+    Print(" Page Count:");
+    Print(LongToString(GetPageCount()));
+    
     return 0;
 }
