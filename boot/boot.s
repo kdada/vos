@@ -34,17 +34,21 @@ SwitchTo64:
 	in al, 0x92
 	or al, 2
 	out 0x92, al
+	
 	;PML4T起始地址
 	mov edi,0x8000 
 	;设置CR3为PML4T基址
 	mov cr3,edi
+	
 	;构造页表
 	xor eax,eax
 	mov es,ax
-	mov ecx,0x1000;4096
-	rep stosd;4*4k的区域清0,用于存放PML4T,PDPT,PDT,PT
+	mov ecx,0x2000;2*4k
+	rep stosd;8*4k的区域清0,用于存放PML4T,PDPT,PDT,PT
+	
+	;构造0x0开始的2M的页表
 	mov edi,cr3
-	mov dword [edi],0x9003;PML4T第一个表项
+	mov dword [edi],0x9003;PML4T第一个表项 
 	add edi,0x1000
 	mov dword [edi],0xa003;PDPT第一个表项
 	add edi,0x1000
@@ -57,6 +61,24 @@ SwitchTo64:
 	add ebx,0x1000
 	add edi,8
 	loop .GenEntry
+	
+	;构造0xffffffff00000000开始的2M的页表
+	mov edi,cr3
+	mov dword [edi+511*8],0xc002;PML4T最后一个表项 
+	mov edi,0xc000
+	mov dword [edi+508*8],0xd002;PDPT第一个表项
+	mov edi,0xd000
+	mov dword [edi],0xe002;PDT第一个表项
+	mov edi,0xe000
+	mov ebx,0x100003;PAGE_PRESENT(0)=1,PAGE_WRITE(1)=1
+	mov ecx,0x200;512
+	.GenEntry2:;生成2M区域的映射,共512个表项,每个表项8字节
+	mov dword [edi],ebx
+	add ebx,0x1000
+	add edi,8
+	loop .GenEntry2
+	
+	
 	;设置IDT和GDT,GDT的代码段描述符的D/B(22)=0,L(21)＝1(标志64位代码段)
 	lidt [IDT.Pointer]
 	lgdt [GDT.Pointer]
@@ -78,9 +100,21 @@ SwitchTo64:
 	
 bits 64
 JumpToKernel:
+	;将核心代码移动到0x100000(1M)
+	mov ax,0x10
+	mov ss,ax
+	mov ds,ax
+	mov es,ax
+	mov fs,ax
+	mov gs,ax
+	mov rcx,0x600
+	mov rsi,0x10000
+	mov rdi,0x100000
+	rep movsq
 	;跳转到核心代码
 	mov rdi,0x1000
-	call 0x10000
+	mov rbx,0x10000
+	call rbx
 	hlt
 
 IDT:

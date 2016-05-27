@@ -2,6 +2,9 @@
 
 #ifndef HFMemoryPage
 #define HFMemoryPage
+// 物理地址中低于1M的部分被视为保留地址,其中的物理内存保留给实模式使用,在long mode下该部分物理内存不被分配
+
+
 
 // 内存映射块
 typedef struct {
@@ -15,15 +18,16 @@ typedef struct {
 // 初始化内存映射信息,MemoryMapBlock指向的Block数组的最后一项的字段值应当全部为0,用于标识Block数组结束
 void InitMemory(MemoryMapBlock *mmb);
 
-// 申请指定数量(count)的内存页,返回指向每一页的内存地址的数组
-QuadWord* AllocPage(QuadWord count);
+// 申请指定数量(count)的内存页,若申请成功则将内存地址填充到memArr指向的数组中并返回0,否则返回错误码
+ErrorCode AllocPage(QuadWord count,QuadWord *memArr);
 
 // 释放指定数量(count)的内存页,页面地址的数组为addr
 void FreePage(QuadWord *addr,QuadWord count);
 
-// 获取可用内存大小
+// 获取物理内存大小
 QuadWord GetMemorySize();
 // 获取总页数
 QuadWord GetPageCount();
-
+// 获取可用页数
+QuadWord GetFreePageCount();
 #endif

@@ -52,6 +52,7 @@ cat <<'sdaf435ewrsdfvue98wj534io5j'
 cc = x86_64-elf-gcc -std=gnu99 -ffreestanding -O2 -Wall -Wextra -c 
 ld = x86_64-elf-gcc -z max-page-size=0x1000 -ffreestanding -O2 -nostdlib -lgcc 
 asm = nasm -f bin
+asme = nasm -f elf64
 md = mkdir
 kp = kernel
 bp = build
@@ -69,7 +70,7 @@ function ForeachSrc()
         if [ -d $file ]
         then
             ForeachSrc $file
-        elif [[ $file =~ .*\.c$ ]]
+        elif [[ $file =~ .*\.[cs]$ ]]
         then
             echo $file '\' >> $fileName 
         fi
@@ -84,7 +85,7 @@ ForeachSrc $kernelPath
 cat <<'sdaf435ewrsdfvue98wj534io5j'
 
 #自动转换obj
-objs = $(patsubst %.c,$(bp)/%.o,$(src)) 
+objs = $(patsubst %.c,$(bp)/%.o,$(patsubst %.s,$(bp)/%.o,$(src))) 
 
 #合并MBR和内核,内核从第二个扇区开始存放,最终构建为1440KB的软盘
 vos: build/mbr.img build/kernel.img
@@ -96,7 +97,7 @@ vos: build/mbr.img build/kernel.img
 	
 #编译MBR
 build/mbr.img:boot/boot.s
-	$(asm) -o $@ boot/boot.s 
+	$(asm) -o $@ $<
 
 #编译内核
 build/kernel.img: $(objs)
@@ -121,7 +122,16 @@ function ForeachObj()
             echo $objFile:$file >> $fileName
 (
 cat <<'sdaf435ewrsdfvue98wj534io5j'
-	$(cc) $< -o $@
+	$(cc) -o $@ $<
+sdaf435ewrsdfvue98wj534io5j
+) >> $fileName
+        elif [[ $file =~ .*\.s$ ]]
+        then
+            objFile=build/${file%s}o        
+            echo $objFile:$file >> $fileName
+(
+cat <<'sdaf435ewrsdfvue98wj534io5j'
+	$(asme) -o $@ $<
 sdaf435ewrsdfvue98wj534io5j
 ) >> $fileName
         fi

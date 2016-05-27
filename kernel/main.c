@@ -2,31 +2,33 @@
 #include "common/lib.h"
 #include "display/print.h"
 #include "memory/page.h"
+#include "asm/func.h"
 
 
 // 根据PCI地址获取数据 bus:8bit device:5bit function:3bit offset:6bit
 DoubleWord PCIInfo(Byte bus,Byte device,Byte function,Byte offset) {
-    Word portOut = 0xcf8;
-    Word portIn = 0xcfc;
     DoubleWord addr = 0x80000000;
     addr |= ((DoubleWord)bus)<<16;
     addr |= ((DoubleWord)device)<<11;
     addr |= ((DoubleWord)function)<<8;
     addr |= offset << 2;
-    asm ("out %1,%3\n\t"
-        "mov %2,%3\n\t"
-        "in %3,%0\n\t"
-        :"=a"(addr)
-        :"a"(addr),"c"(portIn),"d"(portOut)
-        :
-    );
+    PortOutWD(0xcf8,addr);
+    addr = PortInWD(0xcfc);
+    
+    // asm ("out %1,%3\n\t"
+    //     "mov %2,%3\n\t"
+    //     "in %3,%0\n\t"
+    //     :"=a"(addr)
+    //     :"a"(addr),"c"(portIn),"d"(portOut)
+    //     :
+    // );
     return addr;    
 }
 
 
 
 int main(void *memoryMap){   
-    InitMemory(memoryMap); 
+    //InitMemory(memoryMap); 
     ClearScreen();
     for (Word bus = 0;bus < 256;++bus){
         for (Byte device = 0;device < 32;++device){
@@ -95,6 +97,7 @@ int main(void *memoryMap){
     Print(LongToString(GetMemorySize()));
     Print(" Page Count:");
     Print(LongToString(GetPageCount()));
-    
+    Print(" Free Count:");
+    Print(LongToString(GetFreePageCount()));
     return 0;
 }

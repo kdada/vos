@@ -2,10 +2,10 @@ ENTRY(main)
 
 SECTIONS
 {
-	.text 0x10000: ALIGN(4K)
+	.text 0x100000: ALIGN(4K)
 	{
-		*(.text.startup)
-		*(.text)
+		*(.text.startup*)
+		*(.text*)
 	}
 	.rodata : ALIGN(4K)
 	{
@@ -13,7 +13,7 @@ SECTIONS
 	}
 	.data : ALIGN(4K)
 	{
-		*(COMMON)
+		*(COMMON*)
 		*(.*)
 	}
 }
