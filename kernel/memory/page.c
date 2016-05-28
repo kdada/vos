@@ -43,7 +43,7 @@ void InitMemory(MemoryMapBlock *mmb) {
     used.pre = used.next = &used;    
     free.pre = free.next = &free;
     PageLinkNode *node = (PageLinkNode*)(KernelVirtualAddr + KernelUsedPage * PageSize);
-    while (!((mmb->base == 0) && (mmb->length == 0) && (mmb->type == 0))) {
+    for (;!((mmb->base == 0) && (mmb->length == 0) && (mmb->type == 0));++mmb) {
         if (mmb->type == 1 || mmb->type == 3) {
             ramSize += mmb->length;
             QuadWord base = mmb->base;
@@ -83,7 +83,6 @@ void InitMemory(MemoryMapBlock *mmb) {
                 --count;
             }
         }
-        ++mmb;
     }
     //将内核已使用的内存页转为已使用
     

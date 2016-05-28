@@ -49,8 +49,8 @@ fileName="Makefile"
 #输出头
 (
 cat <<'sdaf435ewrsdfvue98wj534io5j'
-cc = x86_64-elf-gcc -std=gnu99 -ffreestanding -O2 -Wall -Wextra -c 
-ld = x86_64-elf-gcc -z max-page-size=0x1000 -ffreestanding -O2 -nostdlib -lgcc 
+cc = x86_64-elf-gcc -std=gnu99 -ffreestanding -O2 -Wall -Wextra -mcmodel=large -ggdb -c 
+ld = x86_64-elf-gcc -z max-page-size=0x1000 -ffreestanding -O2 -nostdlib -lgcc  
 asm = nasm -f bin
 asme = nasm -f elf64
 md = mkdir
@@ -92,9 +92,9 @@ vos: build/mbr.img build/kernel.img
 	cd build	;\
 	touch vos.img	;\
 	dd if=mbr.img of=vos.img	;\
-	dd if=kernel.img of=vos.img seek=1	;\
-	dd if=/dev/zero of=vos.img seek="$$(ls -l vos.img|awk '{print $$ 5}')" bs=1 count="$$((2*80*18*512-$$(ls -l vos.img|awk '{print $$ 5}')))"
-	
+	dd if=/dev/zero of=vos.img seek=1 bs=512 count=2879 ;\
+	dd if=kernel.img of=vos.img seek=1 conv=notrunc
+    
 #编译MBR
 build/mbr.img:boot/boot.s
 	$(asm) -o $@ $<

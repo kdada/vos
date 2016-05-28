@@ -14,21 +14,12 @@ DoubleWord PCIInfo(Byte bus,Byte device,Byte function,Byte offset) {
     addr |= offset << 2;
     PortOutWD(0xcf8,addr);
     addr = PortInWD(0xcfc);
-    
-    // asm ("out %1,%3\n\t"
-    //     "mov %2,%3\n\t"
-    //     "in %3,%0\n\t"
-    //     :"=a"(addr)
-    //     :"a"(addr),"c"(portIn),"d"(portOut)
-    //     :
-    // );
     return addr;    
 }
 
 
-
 int main(void *memoryMap){   
-    //InitMemory(memoryMap); 
+    InitMemory(memoryMap); 
     ClearScreen();
     for (Word bus = 0;bus < 256;++bus){
         for (Byte device = 0;device < 32;++device){
