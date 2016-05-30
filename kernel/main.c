@@ -19,7 +19,6 @@ DoubleWord PCIInfo(Byte bus,Byte device,Byte function,Byte offset) {
 
 
 int main(void *memoryMap){   
-    InitMemory(memoryMap); 
     ClearScreen();
     for (Word bus = 0;bus < 256;++bus){
         for (Byte device = 0;device < 32;++device){
@@ -72,7 +71,7 @@ int main(void *memoryMap){
             }
         }
     }
-    
+    InitMemory(memoryMap); 
     MemoryMapBlock *mm = memoryMap;
     while (!((mm->base == 0) && (mm->length == 0) && (mm->type == 0))) {
         Print("Addr:");

@@ -2,18 +2,27 @@
 
 
 
+// 内核加载的物理地址(由连接器确定地址,不能直接使用)
+const Byte LinkerKernelLoadAddr;
+// 内核起始虚拟地址(由连接器确定地址,不能直接使用)
+const Byte LinkerKernelStartVirtualAddr;
+// 内核结束虚拟地址(由连接器确定地址,不能直接使用)
+const Byte LinkerKernelEndVirtualAddr;
 
 
-// 内核加载的物理地址(1M)
-const QuadWord KernelLoadAddr = 0x100000;
-// 内核虚拟地址,虚拟地址的最后4GB
-const QuadWord KernelVirtualAddr = 0xffffffff00000000;
+// 最小可用的物理内存地址(1M以下保留)
+const QuadWord MinUsablePhysicalMemory = 0x100000;
 // 内存分页大小(4k)
 const QuadWord PageSize = 0x1000;
-// 内核占用的页数(4k*3)
-const QuadWord KernelUsedPage = 3;
-// 最小可用的物理内存地址
-const QuadWord MinUsablePhysicalMemory = 0x100000;
+
+// 内核加载的物理地址
+QuadWord KernelLoadAddr = 0;
+// 内核虚拟地址
+QuadWord KernelVirtualAddr = 0;
+// 内核占用的页数
+QuadWord KernelUsedPage = 0;
+
+
 
 //内存实际总量
 QuadWord ramSize = 0;
@@ -40,6 +49,13 @@ PageLinkNode free = {0,0,0};
 
 // 初始化内存映射信息,MemoryMapBlock指向的Block数组的最后一项的字段值应当全部为0,用于标识Block数组结束
 void InitMemory(MemoryMapBlock *mmb) {
+    /*初始化内核基本信息*/
+    KernelLoadAddr = &LinkerKernelLoadAddr;
+    KernelVirtualAddr = &LinkerKernelStartVirtualAddr;
+    KernelUsedPage = (&LinkerKernelEndVirtualAddr - &LinkerKernelStartVirtualAddr + PageSize - 1) / PageSize;
+
+    
+    /*初始化内存*/
     used.pre = used.next = &used;    
     free.pre = free.next = &free;
     PageLinkNode *node = (PageLinkNode*)(KernelVirtualAddr + KernelUsedPage * PageSize);
