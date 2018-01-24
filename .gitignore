@@ -35,3 +35,4 @@
 # Other files
 Makefile*
 .*
+build/

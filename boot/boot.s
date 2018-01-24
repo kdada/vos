@@ -1,5 +1,14 @@
 org 0x7c00
 Main:
+	;加载内核到0x10000
+	mov bx,0x1000
+	mov es,bx
+	xor bx,bx
+	mov ax,0x0218
+	mov cx,0x000a
+	mov dh,0
+	int 0x13
+
 	;读取内存布局信息
 	mov di,0x100
 	mov es,di
@@ -18,15 +27,6 @@ ReadMM:
 	mov ecx,6
 	rep stosd
 	
-	
-	;加载内核到0x10000
-	mov bx,0x1000
-	mov es,bx
-	xor bx,bx
-	mov ax,0x0218
-	mov cx,0x000a
-	mov dx,0x0000
-	int 0x13
 SwitchTo64:
 	;关中断
 	cli
