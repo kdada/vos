@@ -13,15 +13,36 @@ DoubleWord PortInWD(Word port);
 void MemoryCopy(Byte *from, Byte *to, QuadWord count);
 
 // 获取当前LME4T的基地址
-QuadWord *GetLME4TBase();
+Byte *GetLME4TBase();
 
 // 设置当前LME4T的基地址
-void SetLME4TBase(QuadWord *base);
+void SetLME4TBase(Byte *base);
 
 // 获取当前栈指针
-QuadWord *GetStackPointer();
+Byte *GetStackPointer();
+
+// 设置 GDTR
+void LoadGDTRegister(Byte *addr);
 
 // 设置当前栈指针
-void SetStackPointer(QuadWord *sp);
+void SetStackPointer(Byte *sp);
+
+// 设置 CS
+void SetCS(Word cs);
+
+// 设置 SS
+void SetSS(Word ss);
+
+// 设置 DS
+void SetDS(Word ds);
+
+// 设置 ES
+void SetES(Word es);
+
+// 设置 FS
+void SetFS(Word fs);
+
+// 设置 GS
+void SetGS(Word gs);
 
 #endif

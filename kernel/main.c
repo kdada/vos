@@ -1,6 +1,7 @@
 #include "asm/func.h"
 #include "common/lib.h"
 #include "common/type.h"
+#include "descriptor/gdt.h"
 #include "display/print.h"
 #include "memory/page.h"
 
@@ -19,7 +20,7 @@ DoubleWord PCIInfo(Byte bus, Byte device, Byte function, Byte offset) {
 // 内核启动函数
 // 启动时, main 位于物理内存 0x100000(1Mi), 虚拟内存 0xffffffff00000000.
 // memoryMap 是物理内存分段信息表，放置于物理内存的 0x0 - 0xfffff 范围内.
-int main(void *memoryMap) {
+__attribute__((noreturn)) void main(MemoryMapBlock *memoryMap) {
     ClearScreen();
     for (Word bus = 0; bus < 256; ++bus) {
         for (Byte device = 0; device < 32; ++device) {
@@ -72,7 +73,7 @@ int main(void *memoryMap) {
     MemoryMapBlock *mm = memoryMap;
     while (!((mm->base == 0) && (mm->length == 0) && (mm->type == 0))) {
         Print("Addr:");
-        Print(QuadWordToHex(mm->base));
+        Print(QuadWordToHex((QuadWord)mm->base));
         Print(" Len:");
         Print(QuadWordToHex(mm->length));
         Print(" Type:");
@@ -86,5 +87,9 @@ int main(void *memoryMap) {
     Print(LongToString(GetPageCount()));
     Print(" Free Count:");
     Print(LongToString(GetFreePageCount()));
-    return 0;
+    Print("\n");
+    InitGDT();
+    Print("Initialized GDT\n");
+    while (true) {
+    }
 }
