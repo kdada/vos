@@ -16,6 +16,9 @@ DoubleWord PCIInfo(Byte bus, Byte device, Byte function, Byte offset) {
     return addr;
 }
 
+// 内核启动函数
+// 启动时, main 位于物理内存 0x100000(1Mi), 虚拟内存 0xffffffff00000000.
+// memoryMap 是物理内存分段信息表，放置于物理内存的 0x0 - 0xfffff 范围内.
 int main(void *memoryMap) {
     ClearScreen();
     for (Word bus = 0; bus < 256; ++bus) {

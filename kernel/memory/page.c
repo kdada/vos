@@ -8,104 +8,196 @@ const Byte LinkerKernelStartVirtualAddr;
 const Byte LinkerKernelEndVirtualAddr;
 
 // 最小可用的物理内存地址(1M以下保留)
-const QuadWord MinUsablePhysicalMemory = 0x100000;
+const Byte *MinUsablePhysicalMemory = (Byte *)0x100000;
 // 内存分页大小(4k)
 const QuadWord PageSize = 0x1000;
 
 // 内核加载的物理地址
-QuadWord KernelLoadAddr = 0;
+Byte *KernelLoadAddr = 0;
 // 内核虚拟地址
-QuadWord KernelVirtualAddr = 0;
+Byte *KernelVirtualAddr = 0;
 // 内核占用的页数
-QuadWord KernelUsedPage = 0;
+QuadWord KernelUsedPages = 0;
 
-//内存实际总量
-QuadWord ramSize = 0;
-//内存可用总页数
-QuadWord pageCount = 0;
+// 内存段分配信息
+typedef struct {
+    Byte *base;
+    QuadWord count;
+    QuadWord free;
+    Byte *bitmap;
+} MemorySegment;
 
-// 页链接节点
-typedef struct sPageLinkNode {
-    QuadWord base;              //内存物理基地址
-    struct sPageLinkNode *pre;  //上一个页节点
-    struct sPageLinkNode *next; //下一个页节点
-} PageLinkNode;
+// 最多可以有 50 个可用内存段, 超过部分忽略
+MemorySegment segments[50];
+// 有效内存段数量
+Byte segCount = 0;
 
-// 已经使用的页数量
-QuadWord usedPageCount = 0;
-// 已经使用的页链
-PageLinkNode used = {0, 0, 0};
-// 尚未使用的页链
-PageLinkNode free = {0, 0, 0};
-
-// 初始化内存映射信息,MemoryMapBlock指向的Block数组的最后一项的字段值应当全部为0,用于标识Block数组结束
-void InitMemory(MemoryMapBlock *mmb) {
-    /*初始化内核基本信息*/
-    KernelLoadAddr = &LinkerKernelLoadAddr;
-    KernelVirtualAddr = &LinkerKernelStartVirtualAddr;
-    KernelUsedPage = (&LinkerKernelEndVirtualAddr -
-                      &LinkerKernelStartVirtualAddr + PageSize - 1) /
-                     PageSize;
-
-    /*初始化内存*/
-    used.pre = used.next = &used;
-    free.pre = free.next = &free;
-    PageLinkNode *node =
-        (PageLinkNode *)(KernelVirtualAddr + KernelUsedPage * PageSize);
-    for (; !((mmb->base == 0) && (mmb->length == 0) && (mmb->type == 0));
-         ++mmb) {
-        if (mmb->type == 1 || mmb->type == 3) {
-            ramSize += mmb->length;
-            QuadWord base = mmb->base;
-            QuadWord length = mmb->length;
-            if ((base + length) <= MinUsablePhysicalMemory) {
-                // 忽略低于 MinUsablePhysicalMemory 的物理内存
-                continue;
-            }
-            if (base < MinUsablePhysicalMemory) {
-                // 忽略低于 MinUsablePhysicalMemory 的物理内存
-                length -= MinUsablePhysicalMemory - base;
-                base = MinUsablePhysicalMemory;
-            }
-            QuadWord remainder = base % PageSize;
-            if (remainder != 0) {
-                // 按PageSize对齐
-                QuadWord interval = PageSize - remainder;
-                if (length <= interval) {
-                    continue;
-                }
-                base += interval;
-                length -= interval;
-            }
-            QuadWord count = length / PageSize;
-            pageCount += count;
-            //构造可用页链表
-            while (count > 0) {
-                //构建node
-                node->base = base;
-                node->pre = free.pre;
-                node->next = &free;
-
-                free.pre->next = node;
-                free.pre = node;
-
-                ++node;
-                --count;
-            }
-        }
-    }
-    //将内核已使用的内存页转为已使用
+Bool bitFromMap(Byte *map, QuadWord pos) {
+    Byte bits = map[pos / 8];
+    return bits & (1 << pos % 8);
 }
 
-// 申请指定数量(count)的内存页,若申请成功则将内存地址填充到memArr指向的数组中并返回0,否则返回错误码
-ErrorCode AllocPage(QuadWord count, QuadWord *memArr) { return 0; }
+void setBitToMap(Byte *map, QuadWord pos, Bool bit) {
+    Byte *bits = &map[pos / 8];
+    if (bit) {
+        *bits |= (1 << pos % 8);
+    } else {
+        *bits &= ~(1 << pos % 8);
+    }
+}
 
-// 释放指定数量(count)的内存页,页面地址的数组为addr
-void FreePage(QuadWord *addr, QuadWord count) {}
+Byte *allocPages(Byte segID, QuadWord count) {
+    MemorySegment *seg = &segments[segID];
+    if (seg->free < count) {
+        return null;
+    }
+    QuadWord series = 0;
+    for (QuadWord pos = 0; pos < seg->count; ++pos) {
+        if (bitFromMap(seg->bitmap, pos)) {
+            series = 0;
+            continue;
+        }
+        ++series;
+        if (series < count) {
+            continue;
+        }
+        seg->free -= count;
+        for (; count > 0; --count) {
+            setBitToMap(seg->bitmap, pos - count + 1, true);
+        }
+        return seg->base + PageSize * (pos - series);
+    }
+    return null;
+}
+
+// 申请指定数量(count)的物理内存页, 申请成功则返回物理内存地址，否则返回 null
+Byte *AllocPhysicalPage(QuadWord count) {
+    for (Byte i = 0; i < segCount; ++i) {
+        Byte *target = allocPages(i, count);
+        if (target != null) {
+            return target;
+        }
+    }
+    return null;
+}
+
+// 释放指定数量(count)的物理内存页, 起始地址为 addr 所在的内存页
+void FreePhysicalPage(Byte *addr, QuadWord count) {
+    for (Byte i = 0; i < segCount; ++i) {
+        MemorySegment *seg = &segments[i];
+        if (addr >= seg->base && addr < (seg->base + seg->count * PageSize)) {
+            QuadWord pos = (addr - seg->base) / PageSize;
+            for (QuadWord i = 0; i < count; ++i) {
+                if (bitFromMap(seg->bitmap, pos + i)) {
+                    // 释放内存
+                    setBitToMap(seg->bitmap, pos + i, false);
+                    ++seg->free;
+                }
+            }
+            return;
+        }
+    }
+}
 
 // 获取可用内存大小
-QuadWord GetMemorySize() { return ramSize; }
+QuadWord GetMemorySize() {
+    QuadWord total = 0;
+    for (Byte i = 0; i < segCount; ++i) {
+        total += segments[i].count * PageSize;
+    }
+    return total;
+}
 // 获取总页数
-QuadWord GetPageCount() { return pageCount; }
+QuadWord GetPageCount() {
+    QuadWord total = 0;
+    for (Byte i = 0; i < segCount; ++i) {
+        total += segments[i].count;
+    }
+    return total;
+}
 // 获取可用页数
-QuadWord GetFreePageCount() { return pageCount - usedPageCount; }
+QuadWord GetFreePageCount() {
+    QuadWord total = 0;
+    for (Byte i = 0; i < segCount; ++i) {
+        total += segments[i].free;
+    }
+    return total;
+}
+
+// 初始化内存映射信息, MemoryMapBlock
+// 指向的 Block 数组的最后一项的字段值应当全部为 0, 用于标识 Block 数组结束
+// 低于 0x100000 的内存被忽略, 不能用于分配, 保留给实模式使用
+// 物理内存布局:
+//
+//   ---------------------- 物理内存上限
+//    进程可申请的内存空间
+//   ---------------------- 此处地址取决于 pageCount 和 segCount
+//         内存位图
+//   ---------------------- 0x100000+KernelUsedPages*PageSize
+//         内核内存
+//   ---------------------- 0x100000
+//      实模式使用的内存
+//   ---------------------- 0x0
+//
+void InitMemory(MemoryMapBlock *mmb) {
+    /*初始化内核基本信息*/
+    KernelLoadAddr = (Byte *)&LinkerKernelLoadAddr;
+    KernelVirtualAddr = (Byte *)&LinkerKernelStartVirtualAddr;
+    KernelUsedPages =
+        (&LinkerKernelEndVirtualAddr - KernelVirtualAddr + PageSize - 1) /
+        PageSize;
+
+    // 初始化内存分段位图
+    Byte *bitmapStartAddr = KernelVirtualAddr + KernelUsedPages * PageSize;
+    for (; !((mmb->base == 0) && (mmb->length == 0) && (mmb->type == 0));
+         ++mmb) {
+        if (mmb->type != 1 && mmb->type != 3) {
+            // 不可分配的内存, 直接跳过
+            continue;
+        }
+        Byte *base = mmb->base;
+        QuadWord length = mmb->length;
+        if ((base + length) <= MinUsablePhysicalMemory) {
+            // 忽略低于 MinUsablePhysicalMemory 的物理内存
+            continue;
+        }
+        if (base < MinUsablePhysicalMemory) {
+            // 忽略低于 MinUsablePhysicalMemory 的物理内存
+            length -= MinUsablePhysicalMemory - base;
+            base = (Byte *)MinUsablePhysicalMemory;
+        }
+        QuadWord remainder = (QuadWord)base % PageSize;
+        if (remainder != 0) {
+            // 按PageSize对齐
+            QuadWord interval = PageSize - remainder;
+            if (length <= interval) {
+                continue;
+            }
+            base += interval;
+            length -= interval;
+        }
+        QuadWord count = length / PageSize;
+        if (count <= 0) {
+            continue;
+        }
+        // 构造内存段
+        MemorySegment *seg = &segments[segCount];
+        seg->base = base;
+        seg->count = count;
+        seg->free = seg->count;
+        seg->bitmap = bitmapStartAddr;
+
+        ++segCount;
+        // 计算下一个内存段位图的起始地址
+        bitmapStartAddr += (count + 7) / 8;
+    }
+    QuadWord *start =
+        (QuadWord *)(KernelVirtualAddr + KernelUsedPages * PageSize);
+    QuadWord mapUsedPages =
+        (bitmapStartAddr - (Byte *)start + PageSize - 1) / PageSize;
+    for (; start < (QuadWord *)bitmapStartAddr; ++start) {
+        *start = 0;
+    }
+    // 将内核已使用的内存页标记为已使用
+    allocPages(0, KernelUsedPages + mapUsedPages);
+}

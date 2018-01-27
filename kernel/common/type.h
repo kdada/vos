@@ -4,6 +4,7 @@
 // 基本数据类型
 #define true 1
 #define false 0
+#define null (void *)0
 typedef unsigned char Bool;          // 1字节,布尔类型
 typedef unsigned char Byte;          // 1字节,无符号整数类型
 typedef char Char;                   // 1字节,有符号整数类型
