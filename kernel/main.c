@@ -2,6 +2,7 @@
 #include "common/lib.h"
 #include "common/type.h"
 #include "descriptor/gdt.h"
+#include "descriptor/idt.h"
 #include "display/print.h"
 #include "memory/page.h"
 
@@ -22,6 +23,7 @@ DoubleWord PCIInfo(Byte bus, Byte device, Byte function, Byte offset) {
 // memoryMap 是物理内存分段信息表，放置于物理内存的 0x0 - 0xfffff 范围内.
 __attribute__((noreturn)) void main(MemoryMapBlock *memoryMap) {
     ClearScreen();
+    Print("Start\n");
     for (Word bus = 0; bus < 256; ++bus) {
         for (Byte device = 0; device < 32; ++device) {
             for (Byte function = 0; function < 8; ++function) {
@@ -69,7 +71,6 @@ __attribute__((noreturn)) void main(MemoryMapBlock *memoryMap) {
             }
         }
     }
-    InitMemory(memoryMap);
     MemoryMapBlock *mm = memoryMap;
     while (!((mm->base == 0) && (mm->length == 0) && (mm->type == 0))) {
         Print("Addr:");
@@ -81,6 +82,7 @@ __attribute__((noreturn)) void main(MemoryMapBlock *memoryMap) {
         Print("\n");
         ++mm;
     }
+    InitMemory(memoryMap);
     Print("Memory Size:");
     Print(LongToString(GetMemorySize()));
     Print(" Page Count:");
@@ -90,6 +92,9 @@ __attribute__((noreturn)) void main(MemoryMapBlock *memoryMap) {
     Print("\n");
     InitGDT();
     Print("Initialized GDT\n");
+    InitIDT();
+    Print("Initialized IDT\n");
+    Interrupt(1);
     while (true) {
     }
 }

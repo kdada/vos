@@ -24,6 +24,9 @@ Byte *GetStackPointer();
 // 设置 GDTR
 void LoadGDTRegister(Byte *addr);
 
+// 设置 IDTR
+void LoadIDTRegister(Byte *addr);
+
 // 设置当前栈指针
 void SetStackPointer(Byte *sp);
 
@@ -45,4 +48,6 @@ void SetFS(Word fs);
 // 设置 GS
 void SetGS(Word gs);
 
+// 触发中断
+void Interrupt(Byte number);
 #endif

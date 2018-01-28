@@ -28,7 +28,7 @@ typedef struct {
 } MemorySegment;
 
 // 最多可以有 50 个可用内存段, 超过部分忽略
-MemorySegment segments[50];
+MemorySegment segments[50] = {{0}};
 // 有效内存段数量
 Byte segCount = 0;
 
@@ -149,6 +149,7 @@ void InitMemory(MemoryMapBlock *mmb) {
 
     // 初始化内存分段位图
     Byte *bitmapStartAddr = KernelVirtualAddr + KernelUsedPages * PageSize;
+    segCount = 0;
     for (; !((mmb->base == 0) && (mmb->length == 0) && (mmb->type == 0));
          ++mmb) {
         if (mmb->type != 1 && mmb->type != 3) {

@@ -49,8 +49,8 @@ fileName="Makefile"
 #输出头
 (
 cat <<'sdaf435ewrsdfvue98wj534io5j'
-cc = x86_64-elf-gcc -std=gnu99 -ffreestanding -O2 -Wall -Wextra -mcmodel=large -ggdb -c 
-ld = x86_64-elf-gcc -z max-page-size=0x1000 -ffreestanding -O2 -nostdlib -lgcc  
+cc = x86_64-elf-gcc -std=gnu99 -ffreestanding -O2 -Wall -Wextra -mcmodel=large -mno-80387 -ggdb -c 
+ld = x86_64-elf-gcc -z max-page-size=0x1000 -ffreestanding -mno-80387 -O2 -nostdlib -lgcc  
 asm = nasm -f bin
 asme = nasm -f elf64
 md = mkdir
