@@ -4,8 +4,8 @@ Main:
 	mov bx,0x1000
 	mov es,bx
 	xor bx,bx
-	mov ax,0x0220
-	mov cx,0x000a
+	mov ax,0x0240
+	mov cx,0x0002
 	mov dh,0
 	int 0x13
 
@@ -108,13 +108,14 @@ SwitchTo64:
 bits 64
 JumpToKernel:
 	;将核心代码移动到0x100000(1M)
-	mov rcx,0x4000
-	mov rsi,0x10000
+	mov rcx,0x10000
+	mov rsi,0x11000
 	mov rdi,0x100000
 	rep movsb
 	;跳转到核心代码
-	mov rdi,0x1000
-	mov rbx,0xffffffff00000000
+    mov rdi,0x10018
+	mov rbx,[rdi]
+    mov rdi,0x1000
 	call rbx
 	hlt
 

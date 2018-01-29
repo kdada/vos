@@ -1,5 +1,6 @@
 #include "idt.h"
 #include "../asm/func.h"
+#include "../common/lib.h"
 #include "../display/print.h"
 
 typedef struct {
@@ -51,7 +52,9 @@ void setInterrupt(Byte i, void offset(Frame *frame)) {
 
 __attribute__((interrupt)) __attribute__((target("no-sse,no-mmx"))) void
 divideByZero(Frame *frame) {
-    Print("Interrupt\n");
+    Print(QuadWordToHex(frame->sp));
+    asm("movq $0x1,%rax\r\n"
+        "movq %rax,-0x40(%rbp)");
 }
 
 // 初始化 IDT

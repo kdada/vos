@@ -19,7 +19,7 @@ DoubleWord PCIInfo(Byte bus, Byte device, Byte function, Byte offset) {
 }
 
 // 内核启动函数
-// 启动时, main 位于物理内存 0x100000(1Mi), 虚拟内存 0xffffffff00000000.
+// 启动时, 内核代码位于物理内存 0x100000(1Mi), 虚拟内存 0xffffffff00000000.
 // memoryMap 是物理内存分段信息表，放置于物理内存的 0x0 - 0xfffff 范围内.
 __attribute__((noreturn)) void main(MemoryMapBlock *memoryMap) {
     ClearScreen();
@@ -94,7 +94,9 @@ __attribute__((noreturn)) void main(MemoryMapBlock *memoryMap) {
     Print("Initialized GDT\n");
     InitIDT();
     Print("Initialized IDT\n");
-    Interrupt(1);
+    QuadWord a = 1 / 0;
+    Print("\n");
+    Print(QuadWordToHex(a));
     while (true) {
     }
 }
